@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: zabbix-server
+  labels:
+    app: zabbix
+    tier: server
+    environment: dev
+  namespace: zabbix
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: zabbix-server
+        app: zabbix
+    spec:
+      containers:
+        - name: zabbix-server
+          image: zabbix/zabbix-server-mysql:alpine-3.4-latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 10051
+            protocol: TCP
+            name: zabbix-trapper
+          readinessProbe:
+            tcpSocket:
+              port: zabbix-trapper
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: zabbix-trapper
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          env:
+          - name: DB_SERVER_HOST
+            value: "10.128.27.195"
+          - name: DB_SERVER_PORT
+            value: "3306"
+          - name: MYSQL_USER
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-zbx-user
+          - name: MYSQL_PASSWORD
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-zbx-pass
+          - name: MYSQL_DATABASE
+            value: "zabbix"
+          - name: ZBX_STARTPROXYPOLLERS
+            value: "5"
+          - name: ZBX_PROXYCONFIGFREQUENCY
+            value: "60"
