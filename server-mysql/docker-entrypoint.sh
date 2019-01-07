@@ -16,8 +16,6 @@ zbx_type=${ZBX_TYPE}
 # Possible values: [mysql, postgresql]
 zbx_db_type=${ZBX_DB_TYPE}
 
-
-
 # Default Zabbix installation name
 # Used only by Zabbix web-interface
 ZBX_SERVER_NAME=${ZBX_SERVER_NAME:-"Zabbix docker"}
@@ -41,7 +39,7 @@ escape_spec_char() {
     var_value="${var_value//\\/\\\\}"
     var_value="${var_value//[$'\n']/}"
     var_value="${var_value//\//\\/}"
-    var_value="${var_value//./\\.}"
+    var10051_value="${var_value//./\\.}"
     var_value="${var_value//\*/\\*}"
     var_value="${var_value//^/\\^}"
     var_value="${var_value//\$/\\\$}"
@@ -116,77 +114,7 @@ update_config_multiple_var() {
     done
 }
 
-# Check prerequisites for MySQL database
-check_variables_mysql() {
-    local type=$1
 
-    DB_SERVER_HOST=${DB_SERVER_HOST:-"mysql-server"}
-    DB_SERVER_PORT=${DB_SERVER_PORT:-"3306"}
-    USE_DB_ROOT_USER=false
-    CREATE_ZBX_DB_USER=false
-
-    if [ ! -n "${MYSQL_USER}" ] && [ "${MYSQL_RANDOM_ROOT_PASSWORD}" == "true" ]; then
-        echo "**** Impossible to use MySQL server because of unknown Zabbix user and random 'root' password"
-        exit 1
-    fi
-
-    if [ ! -n "${MYSQL_USER}" ] && [ ! -n "${MYSQL_ROOT_PASSWORD}" ] && [ "${MYSQL_ALLOW_EMPTY_PASSWORD}" != "true" ]; then
-        echo "*** Impossible to use MySQL server because 'root' password is not defined and it is not empty"
-        exit 1
-    fi
-
-    if [ "${MYSQL_ALLOW_EMPTY_PASSWORD}" == "true" ] || [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
-        USE_DB_ROOT_USER=true
-        DB_SERVER_ROOT_USER="root"
-        DB_SERVER_ROOT_PASS=${MYSQL_ROOT_PASSWORD:-""}
-    fi
-
-    [ -n "${MYSQL_USER}" ] && CREATE_ZBX_DB_USER=true
-
-    # If root password is not specified use provided credentials
-    DB_SERVER_ROOT_USER=${DB_SERVER_ROOT_USER:-${MYSQL_USER}}
-    [ "${MYSQL_ALLOW_EMPTY_PASSWORD}" == "true" ] || DB_SERVER_ROOT_PASS=${DB_SERVER_ROOT_PASS:-${MYSQL_PASSWORD}}
-    DB_SERVER_ZBX_USER=${MYSQL_USER:-"zabbix"}
-    DB_SERVER_ZBX_PASS=${MYSQL_PASSWORD:-"zabbix"}
-
-    if [ "$type" == "proxy" ]; then
-        DB_SERVER_DBNAME=${MYSQL_DATABASE:-"zabbix_proxy"}
-    else
-        DB_SERVER_DBNAME=${MYSQL_DATABASE:-"zabbix"}
-    fi
-}
-
-check_db_connect_mysql() {
-    echo "********************"
-    echo "* DB_SERVER_HOST: ${DB_SERVER_HOST}"
-    echo "* DB_SERVER_PORT: ${DB_SERVER_PORT}"
-    echo "* DB_SERVER_DBNAME: ${DB_SERVER_DBNAME}"
-    if [ "${USE_DB_ROOT_USER}" == "true" ]; then
-        echo "* DB_SERVER_ROOT_USER: ${DB_SERVER_ROOT_USER}"
-        echo "* DB_SERVER_ROOT_PASS: ${DB_SERVER_ROOT_PASS}"
-    fi
-    echo "* DB_SERVER_ZBX_USER: ${DB_SERVER_ZBX_USER}"
-    echo "* DB_SERVER_ZBX_PASS: ${DB_SERVER_ZBX_PASS}"
-    echo "********************"
-
-    WAIT_TIMEOUT=5
-
-    while [ ! "$(mysqladmin ping -h ${DB_SERVER_HOST} -P ${DB_SERVER_PORT} -u ${DB_SERVER_ROOT_USER} \
-                --password="${DB_SERVER_ROOT_PASS}" --silent --connect_timeout=10)" ]; do
-        echo "**** MySQL server is not available. Waiting $WAIT_TIMEOUT seconds..."
-        sleep $WAIT_TIMEOUT
-    done
-}
-
-mysql_query() {
-    query=$1
-    local result=""
-
-    result=$(mysql --silent --skip-column-names -h ${DB_SERVER_HOST} -P ${DB_SERVER_PORT} \
-             -u ${DB_SERVER_ROOT_USER} --password="${DB_SERVER_ROOT_PASS}" -e "$query")
-
-    echo $result
-}
 
 update_zbx_config() {
     local type=$1
