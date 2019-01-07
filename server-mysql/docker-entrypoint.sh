@@ -16,11 +16,24 @@ zbx_type=${ZBX_TYPE}
 # Possible values: [mysql, postgresql]
 zbx_db_type=${ZBX_DB_TYPE}
 
+
+
+# Default Zabbix installation name
+# Used only by Zabbix web-interface
+ZBX_SERVER_NAME=${ZBX_SERVER_NAME:-"Zabbix docker"}
+# Default Zabbix server host
+ZBX_SERVER_HOST=${ZBX_SERVER_HOST:-"zabbix-server"}
+# Default Zabbix server port number
+ZBX_SERVER_PORT=${ZBX_SERVER_PORT:-"10051"}
+
+
 # Default directories
 # User 'zabbix' home directory
 ZABBIX_USER_HOME_DIR="/var/lib/zabbix"
 # Configuration files directory
 ZABBIX_ETC_DIR="/etc/zabbix"
+
+
 
 escape_spec_char() {
     local var_value=$1
@@ -311,8 +324,6 @@ else
         echo "** Deploying Zabbix $zbx_type"
     fi
 fi
-
-prepare_system "$zbx_type" "$zbx_opt_type"
 
 [ "$zbx_type" == "server" ] && prepare_server $zbx_db_type
 [ "${ZBX_ADD_SERVER}" == "true" ] && prepare_server ${ZBX_MAIN_DB}
